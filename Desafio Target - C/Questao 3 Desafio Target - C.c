@@ -1,76 +1,48 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <cJSON.h>
 
-void calcularFaturamento(const char* jsonString) {
-    cJSON *jsonArray = cJSON_Parse(jsonString);
-    if (jsonArray == NULL) {
-        printf("Erro ao analisar o JSON.\n");
-        return;
+int main() {
+    // Array de faturamento diário (valores fornecidos pelo JSON)
+    double faturamento[] = {31490.7866, 37277.9400, 37708.4303, 0.0000, 0.0000,
+                17934.2269, 0.0000, 6965.1262, 24390.9374, 14279.6481,
+                0.0000, 0.0000, 39807.6622, 27261.6304, 39775.6434,
+                29797.6232, 17216.5017, 0.0000, 0.0000, 12974.2000,
+                28490.9861, 8748.0937, 8889.0023, 17767.5583, 0.0000,
+                0.0000, 3071.3283, 48275.2994, 10299.6761, 39874.1073};
+
+    int n = sizeof(faturamento) / sizeof(faturamento[0]);
+    double menor = 0, maior = 0, soma = 0;
+    int diasComFaturamento = 0;
+
+    for (int i = 0; i < n; i++) {
+        if (faturamento[i] > 0.0) {
+            menor = maior = faturamento[i];
+            break;
+        }
     }
 
-    int totalDias = cJSON_GetArraySize(jsonArray);
-    double menorValor = -1, maiorValor = -1, soma = 0.0;
-    int diasComFaturamento = 0, diasAcimaMedia = 0;
-
-    // ITERA SOBRE CADA ELEMENTO DO ARRAY JSON
-    for (int i = 0; i < totalDias; i++) {
-        cJSON *dia = cJSON_GetArrayItem(jsonArray, i);
-        cJSON *valor = cJSON_GetObjectItem(dia, "valor");
-
-        if (valor->valuedouble > 0) {  // Ignora dias sem faturamento (valor = 0)
-            if (menorValor == -1 || valor->valuedouble < menorValor) {
-                menorValor = valor->valuedouble;
-            }
-            if (maiorValor == -1 || valor->valuedouble > maiorValor) {
-                maiorValor = valor->valuedouble;
-            }
-            soma += valor->valuedouble;
+    for (int i = 0; i < n; i++) {
+        if (faturamento[i] > 0.0) {
+            if (faturamento[i] < menor) menor = faturamento[i];
+            if (faturamento[i] > maior) maior = faturamento[i];
+            soma += faturamento[i];
             diasComFaturamento++;
         }
     }
 
-    double mediaMensal = soma / diasComFaturamento;
+    double media = soma / diasComFaturamento;
 
-    // CONTA OS DIAS COM FATURAMENTO ACIMA DA MEDIA
-    for (int i = 0; i < totalDias; i++) {
-        cJSON *dia = cJSON_GetArrayItem(jsonArray, i);
-        cJSON *valor = cJSON_GetObjectItem(dia, "valor");
-
-        if (valor->valuedouble > mediaMensal) {
+    int diasAcimaMedia = 0;
+    for (int i = 0; i < n; i++) {
+        if (faturamento[i] > media) {
             diasAcimaMedia++;
         }
     }
 
-    printf("Menor valor de faturamento: %.2f\n", menorValor);
-    printf("Maior valor de faturamento: %.2f\n", maiorValor);
-    printf("Número de dias com faturamento acima da média: %d\n", diasAcimaMedia);
+    printf("Media: %.2lf\n", media);
+    printf("Menor valor de faturamento: %.2f\n", menor);
+    printf("Maior valor de faturamento: %.2f\n", maior);
+    printf("Numero de dias com faturamento acima da media mensal: %d\n", diasAcimaMedia);
 
-    cJSON_Delete(jsonArray);
-}
-
-int main() {
-
-    FILE *arquivo = fopen("faturamento.json", "r");
-    if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo.\n");
-        return 1;
-    }
-
-    // CALCULA O TAMANHO DO ARQUIVO
-    fseek(arquivo, 0, SEEK_END);
-    long tamanhoArquivo = ftell(arquivo);
-    fseek(arquivo, 0, SEEK_SET);
-
-    // LE O CONTEUDO DO ARQUIVO
-    char *jsonString = (char *)malloc(tamanhoArquivo + 1);
-    fread(jsonString, 1, tamanhoArquivo, arquivo);
-    jsonString[tamanhoArquivo] = '\0';
-
-    fclose(arquivo);
-
-    calcularFaturamento(jsonString);
-
-    free(jsonString);
     return 0;
 }
